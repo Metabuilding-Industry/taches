@@ -1,0 +1,4 @@
+Django>=4.2
+django-tailwind>=3.7
+weasyprint>=61.0
+django-import-export>=3.3

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Accueil{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">Mes fiches de suivi</h1>
+    <a href="{% url 'checklist:nouvelle_fiche' %}" class="btn btn-success">+ Nouvelle fiche</a>
+  </div>
+  {% if fiches %}
+    <div class="table-responsive">
+      <table class="table table-striped table-hover align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Atelier</th>
+            <th>Opérateur</th>
+            <th>Contrôleur</th>
+            <th>Date création</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for fiche in fiches %}
+          <tr>
+            <td>{{ fiche.id }}</td>
+            <td>{{ fiche.atelier.nom }}</td>
+            <td>{{ fiche.operateur.get_full_name }}</td>
+            <td>{{ fiche.controleur.get_full_name }}</td>
+            <td>{{ fiche.date_creation|date:'d/m/Y H:i' }}</td>
+            <td><a href="{% url 'checklist:fiche_detail' fiche.id %}" class="btn btn-primary btn-sm">Ouvrir</a></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-info">Aucune fiche de suivi pour l’instant.</div>
+  {% endif %}
+</div>
+{% endblock %}

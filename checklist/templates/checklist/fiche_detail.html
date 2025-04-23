@@ -1,0 +1,918 @@
+{% extends 'base.html' %}
+{% block title %}Fiche de suivi #{{ fiche.id }}{% endblock %}
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h4">Fiche de suivi #{{ fiche.id }}</h1>
+    <div>
+      <a href="{% url 'checklist:export_pdf' fiche.id %}" class="btn btn-outline-secondary me-2">Exporter PDF</a>
+      <a href="{% url 'checklist:export_csv' fiche.id %}" class="btn btn-outline-success">Exporter CSV</a>
+    </div>
+  </div>
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row mb-2">
+        <div class="col-md-4"><strong>Atelier :</strong> {{ fiche.atelier.nom }}</div>
+        <div class="col-md-4"><strong>Opérateur :</strong> {{ fiche.operateur.get_full_name }}</div>
+        <div class="col-md-4"><strong>Contrôleur :</strong> {{ fiche.controleur.get_full_name }}</div>
+      </div>
+      <div class="row">
+        <div class="col-md-4"><strong>Date de création :</strong> {{ fiche.date_creation|date:'d/m/Y H:i' }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="card mb-4">
+    <div class="card-body">
+      <h2 class="h6 mb-3">Validation de la fiche</h2>
+      <div class="row">
+        <div class="col-md-6 mb-2">
+          <strong>Validation opérateur :</strong>
+          {% if fiche.valide_par_operateur %}
+            <span class="text-success">Validé par {{ fiche.valide_par_operateur.get_full_name }} le {{ fiche.date_validation_operateur|date:'d/m/Y H:i' }}</span>
+          {% elif user.id == fiche.operateur.id %}
+            <form method="post" class="d-inline">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="valider_fiche_operateur">
+              <button type="submit" class="btn btn-primary btn-sm ajax-submit">Valider comme opérateur</button>
+            </form>
+          {% else %}
+            <span class="text-muted">En attente de validation</span>
+          {% endif %}
+        </div>
+        <div class="col-md-6 mb-2">
+          <strong>Validation contrôleur :</strong>
+          {% if fiche.valide_par_controleur %}
+            <span class="text-success">Validé par {{ fiche.valide_par_controleur.get_full_name }} le {{ fiche.date_validation_controleur|date:'d/m/Y H:i' }}</span>
+          {% elif user.id == fiche.controleur.id %}
+            <form method="post" class="d-inline">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="valider_fiche_controleur">
+              <button type="submit" class="btn btn-secondary btn-sm ajax-submit">Valider comme contrôleur</button>
+            </form>
+          {% else %}
+            <span class="text-muted">En attente de validation</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <h2 class="h5 mb-3">Étapes de fabrication</h2>
+  <div class="accordion mb-4" id="accordionEtapes">
+    <!-- Étape 1 : Mesure des composants -->
+    <div class="accordion-item mb-2">
+      <h2 class="accordion-header" id="headingMesureComposants">
+        <button class="accordion-button {% if mesure_composants and mesure_composants.valide %}text-success{% else %}collapsed{% endif %} bg-danger text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMesureComposants" aria-expanded="{% if mesure_composants and mesure_composants.valide %}true{% else %}false{% endif %}" aria-controls="collapseMesureComposants">
+          Étape 1 : Mesure des composants 
+          {% if mesure_composants and mesure_composants.valide %}
+            <i class="bi bi-check-circle-fill ms-2"></i>
+          {% endif %}
+        </button>
+      </h2>
+      <div id="collapseMesureComposants" class="accordion-collapse collapse {% if mesure_composants and mesure_composants.valide %}show{% endif %}" aria-labelledby="headingMesureComposants" data-bs-parent="#accordionEtapes">
+        <div class="accordion-body">
+          {% if mesure_composants and mesure_composants.valide %}
+            <div class="alert alert-success mb-3">
+              <i class="bi bi-check-circle-fill"></i> Étape validée par {{ mesure_composants.valide_par.username }} le {{ mesure_composants.date_validation|date:'d/m/Y H:i' }}
+            </div>
+            {% if mesure_composants.duree %}
+            <div class="alert alert-info mb-3">
+              <i class="bi bi-clock"></i> <strong>Temps passé sur cette étape :</strong> {{ mesure_composants.duree }}
+            </div>
+            {% endif %}
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">1. Ciment</label>
+                <input type="text" class="form-control" value="{{ mesure_composants.ciment|default_if_none:'Non spécifié' }}" readonly>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">2. Sable</label>
+                <input type="text" class="form-control" value="{{ mesure_composants.sable|default_if_none:'Non spécifié' }}" readonly>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">3. Eau</label>
+                <input type="text" class="form-control" value="{{ mesure_composants.eau|default_if_none:'Non spécifié' }}" readonly>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">4. Agent moussant</label>
+                <input type="text" class="form-control" value="{{ mesure_composants.agent_moussant|default_if_none:'Non spécifié' }}" readonly>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">5. Fibre de verre</label>
+                <input type="text" class="form-control" value="{{ mesure_composants.fibre_verre|default_if_none:'Non spécifié' }}" readonly>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">6. DSP XL</label>
+                <input type="text" class="form-control" value="{{ mesure_composants.dsp_xl|default_if_none:'Non spécifié' }}" readonly>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">7. HDR</label>
+                <input type="text" class="form-control" value="{{ mesure_composants.hdr|default_if_none:'Non spécifié' }}" readonly>
+              </div>
+              <div class="col-12">
+                <label class="form-label">8. Commentaires</label>
+                <textarea class="form-control" rows="2" readonly>{{ mesure_composants.commentaires|default_if_none:'' }}</textarea>
+              </div>
+            </div>
+          {% else %}
+            <form method="post" class="row g-3 validation-form">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="save_mesure_composants">
+              
+              <!-- Boutons de gestion du temps -->
+              <div class="col-12 mb-3" id="mesure-composants-time-section">
+                <div class="card bg-light">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div class="btn-group">
+                        {% if not mesure_composants.date_debut %}
+                          <form method="post" class="d-inline" id="start-mesure-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="start_mesure_composants">
+                            <button type="submit" class="btn btn-sm btn-primary time-action-btn" onclick="event.stopPropagation();">Démarrer</button>
+                          </form>
+                        {% elif not mesure_composants.date_fin %}
+                          {% if not mesure_composants.date_pause %}
+                            <form method="post" class="d-inline" id="pause-mesure-form">
+                              {% csrf_token %}
+                              <input type="hidden" name="action" value="pause_mesure_composants">
+                              <button type="submit" class="btn btn-sm btn-warning time-action-btn" onclick="event.stopPropagation();">Pause</button>
+                            </form>
+                          {% else %}
+                            <form method="post" class="d-inline" id="resume-mesure-form">
+                              {% csrf_token %}
+                              <input type="hidden" name="action" value="resume_mesure_composants">
+                              <button type="submit" class="btn btn-sm btn-info time-action-btn" onclick="event.stopPropagation();">Reprendre</button>
+                            </form>
+                          {% endif %}
+                          <form method="post" class="d-inline ms-2" id="finish-mesure-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="finish_mesure_composants">
+                            <button type="submit" class="btn btn-sm btn-success time-action-btn" onclick="event.stopPropagation();">Terminer</button>
+                          </form>
+                        {% endif %}
+                      </div>
+                      <div>
+                        <strong>Statut :</strong>
+                        {% if mesure_composants.date_debut and not mesure_composants.date_fin %}
+                          {% if mesure_composants.date_pause %}
+                            <span class="badge bg-warning">En pause</span>
+                          {% else %}
+                            <span class="badge bg-primary">En cours</span>
+                          {% endif %}
+                        {% elif mesure_composants.date_fin %}
+                          <span class="badge bg-success">Terminé</span>
+                        {% else %}
+                          <span class="badge bg-secondary">Non démarré</span>
+                        {% endif %}
+                        {% if mesure_composants.duree %}
+                          <strong class="ms-2">Durée :</strong> {{ mesure_composants.duree }}
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Grille de champs améliorée -->
+              <div class="card mb-3">
+                <div class="card-header bg-light">
+                  <h5 class="card-title mb-0">Composants</h5>
+                </div>
+                <div class="card-body">
+                  <div class="row g-3">
+                    <div class="col-md-4">
+                      <label class="form-label fw-bold">1. Ciment</label>
+                      <div class="input-group">
+                        <input type="number" step="any" min="0" class="form-control" name="ciment" placeholder="Quantité" value="{{ mesure_composants.ciment|default_if_none:'' }}" required>
+                        <span class="input-group-text">kg</span>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label fw-bold">2. Sable</label>
+                      <div class="input-group">
+                        <input type="number" step="any" min="0" class="form-control" name="sable" placeholder="Quantité" value="{{ mesure_composants.sable|default_if_none:'' }}" required>
+                        <span class="input-group-text">kg</span>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label fw-bold">3. Eau</label>
+                      <div class="input-group">
+                        <input type="number" step="any" min="0" class="form-control" name="eau" placeholder="Quantité" value="{{ mesure_composants.eau|default_if_none:'' }}" required>
+                        <span class="input-group-text">L</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="row g-3 mt-2">
+                    <div class="col-md-4">
+                      <label class="form-label fw-bold">4. Agent moussant</label>
+                      <div class="input-group">
+                        <input type="number" step="any" min="0" class="form-control" name="agent_moussant" placeholder="Quantité" value="{{ mesure_composants.agent_moussant|default_if_none:'' }}" required>
+                        <span class="input-group-text">ml</span>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label fw-bold">5. Fibre de verre</label>
+                      <div class="input-group">
+                        <input type="number" step="any" min="0" class="form-control" name="fibre_verre" placeholder="Quantité" value="{{ mesure_composants.fibre_verre|default_if_none:'' }}" required>
+                        <span class="input-group-text">g</span>
+                      </div>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label fw-bold">6. DSP XL</label>
+                      <div class="input-group">
+                        <input type="number" step="any" min="0" class="form-control" name="dsp_xl" placeholder="Quantité" value="{{ mesure_composants.dsp_xl|default_if_none:'' }}" required>
+                        <span class="input-group-text">g</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="row g-3 mt-2">
+                    <div class="col-md-4">
+                      <label class="form-label fw-bold">7. HDR</label>
+                      <div class="input-group">
+                        <input type="number" step="any" min="0" class="form-control" name="hdr" placeholder="Quantité" value="{{ mesure_composants.hdr|default_if_none:'' }}" required>
+                        <span class="input-group-text">g</span>
+                      </div>
+                    </div>
+                    <div class="col-md-8">
+                      <label class="form-label fw-bold">8. Commentaires</label>
+                      <textarea class="form-control" name="commentaires_mesure" rows="1" placeholder="Commentaires sur la mesure des composants..." required>{{ mesure_composants.commentaires|default_if_none:'' }}</textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% if mesure_composants %}
+              <div class="col-12 text-end">
+                <span class="text-muted small">Dernière saisie : {{ mesure_composants.date_saisie|date:'d/m/Y H:i' }}</span>
+              </div>
+              {% endif %}
+              <div class="col-12 d-flex justify-content-end">
+                <form method="post" class="d-inline validation-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="valider_mesure_composants">
+                  <button type="submit" class="btn btn-success">Valider cette étape</button>
+                </form>
+              </div>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <!-- Étape 2 : Mélange du mortier -->
+    <div class="accordion-item mb-2">
+      <h2 class="accordion-header" id="headingMelangeMortier">
+        <button class="accordion-button {% if melange_mortier and melange_mortier.valide %}text-success{% else %}collapsed{% endif %} {% if not mesure_composants or not mesure_composants.valide %}disabled{% endif %} bg-danger text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMelangeMortier" aria-expanded="{% if melange_mortier and melange_mortier.valide %}true{% else %}false{% endif %}" aria-controls="collapseMelangeMortier">
+          Étape 2 : Mélange du mortier
+          {% if melange_mortier and melange_mortier.valide %}
+            <i class="bi bi-check-circle-fill ms-2"></i>
+          {% endif %}
+        </button>
+      </h2>
+      <div id="collapseMelangeMortier" class="accordion-collapse collapse {% if melange_mortier and melange_mortier.valide %}show{% endif %}" aria-labelledby="headingMelangeMortier" data-bs-parent="#accordionEtapes">
+        <div class="accordion-body">
+          {% if not mesure_composants or not mesure_composants.valide %}
+            <div class="alert alert-warning">
+              <i class="bi bi-exclamation-triangle-fill"></i> Vous devez d'abord compléter et valider l'étape de mesure des composants.
+            </div>
+          {% elif melange_mortier and melange_mortier.valide %}
+            <div class="alert alert-success mb-3">
+              <i class="bi bi-check-circle-fill"></i> Étape validée par {{ melange_mortier.valide_par.username }} le {{ melange_mortier.date_validation|date:'d/m/Y H:i' }}
+            </div>
+            {% if melange_mortier.duree %}
+            <div class="alert alert-info mb-3">
+              <i class="bi bi-clock"></i> <strong>Temps passé sur cette étape :</strong> {{ melange_mortier.duree }}
+            </div>
+            {% endif %}
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="etape_verser_eau" id="etape_verser_eau" {% if melange_mortier.etape_verser_eau %}checked{% endif %} required>
+                  <label class="form-check-label fw-bold" for="etape_verser_eau">
+                    1. Verser l'eau dans le malaxeur
+                  </label>
+                </div>
+                
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="etape_ajouter_fibre" id="etape_ajouter_fibre" {% if melange_mortier.etape_ajouter_fibre %}checked{% endif %} required>
+                  <label class="form-check-label fw-bold" for="etape_ajouter_fibre">
+                    2. Ajouter la fibre de verre
+                  </label>
+                </div>
+                
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="etape_melanger_1min" id="etape_melanger_1min" {% if melange_mortier.etape_melanger_1min %}checked{% endif %} required>
+                  <label class="form-check-label fw-bold" for="etape_melanger_1min">
+                    3. Mélanger pendant 1 minute
+                  </label>
+                </div>
+              </div>
+              
+              <div class="col-md-6">
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="etape_verser_ciment" id="etape_verser_ciment" {% if melange_mortier.etape_verser_ciment %}checked{% endif %} required>
+                  <label class="form-check-label fw-bold" for="etape_verser_ciment">
+                    4. Verser le ciment et le sable
+                  </label>
+                </div>
+                
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="etape_ajuster_eau" id="etape_ajuster_eau" {% if melange_mortier.etape_ajuster_eau %}checked{% endif %} required>
+                  <label class="form-check-label fw-bold" for="etape_ajuster_eau">
+                    5. Ajuster la quantité d'eau si nécessaire
+                  </label>
+                </div>
+                
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="checkbox" name="etape_mesurer_densite" id="etape_mesurer_densite" {% if melange_mortier.etape_mesurer_densite %}checked{% endif %} required>
+                  <label class="form-check-label fw-bold" for="etape_mesurer_densite">
+                    6. Mesurer la densité du mortier
+                  </label>
+                </div>
+              </div>
+              
+              <div class="col-md-6 mt-3">
+                <label class="form-label fw-bold">7. Densité mesurée</label>
+                <div class="input-group">
+                  <input type="number" step="0.01" min="0" class="form-control" name="densite" placeholder="Densité" value="{{ melange_mortier.densite|default_if_none:'' }}" required>
+                  <span class="input-group-text">kg/L</span>
+                </div>
+              </div>
+              
+              <div class="col-md-6 mt-3">
+                <label class="form-label fw-bold">8. Commentaires</label>
+                <textarea class="form-control" name="commentaires_melange" rows="1" placeholder="Commentaires sur le mélange..." required>{{ melange_mortier.commentaires|default_if_none:'' }}</textarea>
+              </div>
+            </div>
+          {% else %}
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="save_melange_mortier">
+              
+              <!-- Boutons de gestion du temps -->
+              <div class="mb-3" id="melange-mortier-time-section">
+                <div class="card bg-light">
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div class="btn-group">
+                        {% if not melange_mortier.date_debut %}
+                          <form method="post" class="d-inline" id="start-melange-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="start_melange_mortier">
+                            <button type="submit" class="btn btn-sm btn-primary time-action-btn" onclick="event.stopPropagation();">Démarrer</button>
+                          </form>
+                        {% elif not melange_mortier.date_fin %}
+                          {% if not melange_mortier.date_pause %}
+                            <form method="post" class="d-inline" id="pause-melange-form">
+                              {% csrf_token %}
+                              <input type="hidden" name="action" value="pause_melange_mortier">
+                              <button type="submit" class="btn btn-sm btn-warning time-action-btn" onclick="event.stopPropagation();">Pause</button>
+                            </form>
+                          {% else %}
+                            <form method="post" class="d-inline" id="resume-melange-form">
+                              {% csrf_token %}
+                              <input type="hidden" name="action" value="resume_melange_mortier">
+                              <button type="submit" class="btn btn-sm btn-info time-action-btn" onclick="event.stopPropagation();">Reprendre</button>
+                            </form>
+                          {% endif %}
+                          <form method="post" class="d-inline ms-2" id="finish-melange-form">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="finish_melange_mortier">
+                            <button type="submit" class="btn btn-sm btn-success time-action-btn" onclick="event.stopPropagation();">Terminer</button>
+                          </form>
+                        {% endif %}
+                      </div>
+                      <div>
+                        <strong>Statut :</strong>
+                        {% if melange_mortier.date_debut and not melange_mortier.date_fin %}
+                          {% if melange_mortier.date_pause %}
+                            <span class="badge bg-warning">En pause</span>
+                          {% else %}
+                            <span class="badge bg-primary">En cours</span>
+                          {% endif %}
+                        {% elif melange_mortier.date_fin %}
+                          <span class="badge bg-success">Terminé</span>
+                        {% else %}
+                          <span class="badge bg-secondary">Non démarré</span>
+                        {% endif %}
+                        {% if melange_mortier.duree %}
+                          <strong class="ms-2">Durée :</strong> {{ melange_mortier.duree }}
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="card mb-3">
+                <div class="card-header bg-light">
+                  <h5 class="card-title mb-0">Instructions de mélange</h5>
+                </div>
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-md-6">
+                      <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="etape_verser_eau" id="etape_verser_eau" {% if melange_mortier.etape_verser_eau %}checked{% endif %} required>
+                        <label class="form-check-label fw-bold" for="etape_verser_eau">
+                          1. Verser l'eau dans le malaxeur
+                        </label>
+                      </div>
+                      
+                      <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="etape_ajouter_fibre" id="etape_ajouter_fibre" {% if melange_mortier.etape_ajouter_fibre %}checked{% endif %} required>
+                        <label class="form-check-label fw-bold" for="etape_ajouter_fibre">
+                          2. Ajouter la fibre de verre
+                        </label>
+                      </div>
+                      
+                      <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="etape_melanger_1min" id="etape_melanger_1min" {% if melange_mortier.etape_melanger_1min %}checked{% endif %} required>
+                        <label class="form-check-label fw-bold" for="etape_melanger_1min">
+                          3. Mélanger pendant 1 minute
+                        </label>
+                      </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                      <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="etape_verser_ciment" id="etape_verser_ciment" {% if melange_mortier.etape_verser_ciment %}checked{% endif %} required>
+                        <label class="form-check-label fw-bold" for="etape_verser_ciment">
+                          4. Verser le ciment et le sable
+                        </label>
+                      </div>
+                      
+                      <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="etape_ajuster_eau" id="etape_ajuster_eau" {% if melange_mortier.etape_ajuster_eau %}checked{% endif %} required>
+                        <label class="form-check-label fw-bold" for="etape_ajuster_eau">
+                          5. Ajuster la quantité d'eau si nécessaire
+                        </label>
+                      </div>
+                      
+                      <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" name="etape_mesurer_densite" id="etape_mesurer_densite" {% if melange_mortier.etape_mesurer_densite %}checked{% endif %} required>
+                        <label class="form-check-label fw-bold" for="etape_mesurer_densite">
+                          6. Mesurer la densité du mortier
+                        </label>
+                      </div>
+                    </div>
+                    
+                    <div class="col-md-6 mt-3">
+                      <label class="form-label fw-bold">7. Densité mesurée</label>
+                      <div class="input-group">
+                        <input type="number" step="0.01" min="0" class="form-control" name="densite" placeholder="Densité" value="{{ melange_mortier.densite|default_if_none:'' }}" required>
+                        <span class="input-group-text">kg/L</span>
+                      </div>
+                    </div>
+                    
+                    <div class="col-md-6 mt-3">
+                      <label class="form-label fw-bold">8. Commentaires</label>
+                      <textarea class="form-control" name="commentaires_melange" rows="1" placeholder="Commentaires sur le mélange..." required>{{ melange_mortier.commentaires|default_if_none:'' }}</textarea>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% if melange_mortier %}
+              <div class="mb-3 text-end">
+                <span class="text-muted small">Dernière saisie : {{ melange_mortier.date_saisie|date:'d/m/Y H:i' }}</span>
+              </div>
+              {% endif %}
+              <div class="d-flex justify-content-end">
+                {% if melange_mortier %}
+                <form method="post" class="d-inline validation-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="valider_melange_mortier">
+                  <button type="submit" class="btn btn-success">Valider cette étape</button>
+                </form>
+                {% endif %}
+              </div>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <!-- Autres étapes dynamiques existantes -->
+    {% for tache in taches %}
+    <div class="accordion-item mb-2">
+      <h2 class="accordion-header" id="heading{{ tache.id }}">
+        <button class="accordion-button {% if tache.valide %}text-success{% else %}collapsed{% endif %} {% if not mesure_composants or not mesure_composants.valide %}disabled{% endif %} bg-danger text-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ tache.id }}" aria-expanded="{% if tache.valide %}true{% else %}false{% endif %}" aria-controls="collapse{{ tache.id }}">
+          Étape {{ tache.etape.ordre }} : {{ tache.etape.nom }}
+          {% if tache.valide %}
+            <i class="bi bi-check-circle-fill ms-2"></i>
+          {% endif %}
+        </button>
+      </h2>
+      <div id="collapse{{ tache.id }}" class="accordion-collapse collapse {% if tache.valide %}show{% endif %}" aria-labelledby="heading{{ tache.id }}" data-bs-parent="#accordionEtapes">
+        <div class="accordion-body">
+          {% if not mesure_composants or not mesure_composants.valide %}
+            <div class="alert alert-warning">
+              <i class="bi bi-exclamation-triangle-fill"></i> Vous devez d'abord compléter et valider l'étape de mesure des composants.
+            </div>
+          {% elif tache.valide %}
+            <div class="alert alert-success mb-3">
+              <i class="bi bi-check-circle-fill"></i> Étape validée par {{ tache.valide_par.username }} le {{ tache.date_validation|date:'d/m/Y H:i' }}
+            </div>
+            {% if tache.duree %}
+            <div class="alert alert-info mb-3">
+              <i class="bi bi-clock"></i> <strong>Temps passé sur cette étape :</strong> {{ tache.duree }}
+            </div>
+            {% endif %}
+            <div class="row align-items-center mb-2">
+              <div class="col-md-6">
+                <strong>Validation opérateur :</strong>
+                <span class="text-success small">{{ tache.valide_par_operateur.get_full_name }}<br>({{ tache.date_validation_operateur|date:'d/m/Y H:i' }})</span>
+              </div>
+              <div class="col-md-6">
+                <strong>Validation contrôleur :</strong>
+                <span class="text-success small">{{ tache.valide_par_controleur.get_full_name }}<br>({{ tache.date_validation_controleur|date:'d/m/Y H:i' }})</span>
+              </div>
+            </div>
+            <div class="mt-2">
+              <strong>Consignes :</strong> {{ tache.etape.consignes|linebreaksbr }}
+            </div>
+            <div class="mt-2">
+              <strong>Début :</strong> {{ tache.date_debut|date:'d/m/Y H:i' }}
+            </div>
+            <div class="mt-2">
+              <strong>Fin :</strong> {{ tache.date_fin|date:'d/m/Y H:i' }}
+            </div>
+            <div class="mt-2">
+              <strong>Durée :</strong> {{ tache.duree|default:'—' }}
+            </div>
+            <div class="mt-2">
+              <strong>Validation :</strong> {{ tache.get_validation_display }}
+            </div>
+            <div class="mt-2">
+              <strong>Observations :</strong> {{ tache.observations }}
+            </div>
+          {% else %}
+            <div class="row align-items-center mb-2">
+              <div class="col-md-6">
+                <strong>Validation opérateur :</strong>
+                {% if tache.valide_par_operateur %}
+                  <span class="text-success small">{{ tache.valide_par_operateur.get_full_name }}<br>({{ tache.date_validation_operateur|date:'d/m/Y H:i' }})</span>
+                {% elif user.id == fiche.operateur.id %}
+                  <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="valider_tache_operateur_{{ tache.id }}">
+                    <button type="submit" class="btn btn-outline-primary btn-sm ajax-submit">Valider opérateur</button>
+                  </form>
+                {% else %}
+                  <span class="text-muted small">En attente</span>
+                {% endif %}
+              </div>
+              <div class="col-md-6">
+                <strong>Validation contrôleur :</strong>
+                {% if tache.valide_par_controleur %}
+                  <span class="text-success small">{{ tache.valide_par_controleur.get_full_name }}<br>({{ tache.date_validation_controleur|date:'d/m/Y H:i' }})</span>
+                {% elif user.id == fiche.controleur.id %}
+                  <form method="post" class="d-inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="valider_tache_controleur_{{ tache.id }}">
+                    <button type="submit" class="btn btn-outline-secondary btn-sm ajax-submit">Valider contrôleur</button>
+                  </form>
+                {% else %}
+                  <span class="text-muted small">En attente</span>
+                {% endif %}
+              </div>
+            </div>
+            <div class="mt-2">
+              <strong>Consignes :</strong> {{ tache.etape.consignes|linebreaksbr }}
+            </div>
+            <div class="mt-2">
+              <strong>Début :</strong> {{ tache.date_debut|date:'d/m/Y H:i' }}
+            </div>
+            <div class="mt-2">
+              <strong>Fin :</strong> {{ tache.date_fin|date:'d/m/Y H:i' }}
+            </div>
+            <div class="mt-2">
+              <strong>Durée :</strong> {{ tache.duree|default:'—' }}
+            </div>
+            <div class="mt-2">
+              <strong>Validation :</strong> {{ tache.get_validation_display }}
+            </div>
+            <div class="mt-2">
+              <strong>Observations :</strong> {{ tache.observations }}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="card mb-4">
+    <div class="card-body">
+      <h2 class="h6 mb-3">Incidents</h2>
+      {% if incidents %}
+        <ul class="list-group mb-3">
+          {% for incident in incidents %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>{{ incident.description }}</span>
+              <span class="badge bg-danger">{{ incident.date|date:'d/m/Y H:i' }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="alert alert-info">Aucun incident signalé.</div>
+      {% endif %}
+      <form method="post" class="mt-3">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_incident">
+        <div class="input-group">
+          <input type="text" name="incident_description" class="form-control" placeholder="Décrire un nouvel incident..." required>
+          <button type="submit" class="btn btn-danger ajax-submit">Ajouter</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="card mb-4">
+    <div class="card-body">
+      <h2 class="h6 mb-3">Retour d'expérience</h2>
+      {% if retour_experience %}
+        <div class="alert alert-success">{{ retour_experience.commentaire }}</div>
+      {% endif %}
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_retour">
+        <div class="mb-3">
+          <textarea name="retour_commentaire" class="form-control" rows="2" placeholder="Votre retour d'expérience..." required>{% if retour_experience %}{{ retour_experience.commentaire }}{% endif %}</textarea>
+        </div>
+        <button type="submit" class="btn btn-info ajax-submit">{{ retour_experience|yesno:'Mettre à jour,Ajouter' }}</button>
+      </form>
+      {% if retour_experience %}
+      <div class="mt-2 text-gray-700">Dernier retour enregistré le {{ retour_experience.date|date:'d/m/Y H:i' }}</div>
+      {% endif %}
+    </div>
+  </div>
+  <a href="{% url 'checklist:accueil' %}" class="btn btn-outline-dark">Retour à l'accueil</a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+  // Fonction pour gérer les actions sans rechargement de page
+  $('.time-action-btn').click(function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    var $button = $(this);
+    var form = $button.closest('form');
+    var action = form.find('input[name="action"]').val();
+    var url = "{% url 'checklist:fiche_detail' fiche.id %}";
+    var section = action.includes('mesure_composants') ? 'mesure-composants' : 'melange-mortier';
+    
+    // Ajouter le token CSRF aux données
+    var csrftoken = $('input[name="csrfmiddlewaretoken"]').val();
+    var formData = form.serialize();
+    
+    // Afficher un indicateur de chargement sur le bouton
+    var originalText = $button.text();
+    $button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ' + originalText);
+    
+    // Envoyer la requête AJAX
+    $.ajax({
+      type: "POST",
+      url: url,
+      data: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': csrftoken
+      },
+      dataType: 'json',
+      success: function(response) {
+        if (response.success) {
+          // Mettre à jour les boutons en fonction de la réponse
+          updateTimeButtons(section, response);
+          
+          // Mettre à jour le statut
+          updateTimeStatus(section, response);
+        } else {
+          alert("Une erreur s'est produite. Veuillez réessayer.");
+        }
+      },
+      error: function(xhr) {
+        if (xhr.responseJSON && xhr.responseJSON.error) {
+          alert(xhr.responseJSON.error);
+        } else {
+          alert("Une erreur s'est produite. Veuillez réessayer.");
+        }
+      },
+      complete: function() {
+        // Restaurer le bouton
+        $button.prop('disabled', false).text(originalText);
+      }
+    });
+  });
+  
+  // Fonction pour mettre à jour les boutons de gestion du temps
+  function updateTimeButtons(section, data) {
+    var buttonGroup = $('#' + section + '-time-section .btn-group');
+    buttonGroup.empty();
+    
+    if (data.has_start) {
+      var startForm = $('<form method="post" class="d-inline" id="start-' + section.replace('-', '-') + '-form"></form>');
+      startForm.append('{% csrf_token %}');
+      startForm.append('<input type="hidden" name="action" value="start_' + section.replace('-', '_') + '">');
+      startForm.append('<button type="submit" class="btn btn-sm btn-primary time-action-btn" onclick="event.stopPropagation();">Démarrer</button>');
+      buttonGroup.append(startForm);
+    }
+    
+    if (data.has_pause) {
+      var pauseForm = $('<form method="post" class="d-inline" id="pause-' + section.replace('-', '-') + '-form"></form>');
+      pauseForm.append('{% csrf_token %}');
+      pauseForm.append('<input type="hidden" name="action" value="pause_' + section.replace('-', '_') + '">');
+      pauseForm.append('<button type="submit" class="btn btn-sm btn-warning time-action-btn" onclick="event.stopPropagation();">Pause</button>');
+      buttonGroup.append(pauseForm);
+    }
+    
+    if (data.has_resume) {
+      var resumeForm = $('<form method="post" class="d-inline" id="resume-' + section.replace('-', '-') + '-form"></form>');
+      resumeForm.append('{% csrf_token %}');
+      resumeForm.append('<input type="hidden" name="action" value="resume_' + section.replace('-', '_') + '">');
+      resumeForm.append('<button type="submit" class="btn btn-sm btn-info time-action-btn" onclick="event.stopPropagation();">Reprendre</button>');
+      buttonGroup.append(resumeForm);
+    }
+    
+    if (data.has_finish) {
+      var finishForm = $('<form method="post" class="d-inline ms-2" id="finish-' + section.replace('-', '-') + '-form"></form>');
+      finishForm.append('{% csrf_token %}');
+      finishForm.append('<input type="hidden" name="action" value="finish_' + section.replace('-', '_') + '">');
+      finishForm.append('<button type="submit" class="btn btn-sm btn-success time-action-btn" onclick="event.stopPropagation();">Terminer</button>');
+      buttonGroup.append(finishForm);
+    }
+    
+    // Réattacher les gestionnaires d'événements aux nouveaux boutons
+    $('.time-action-btn').off('click').on('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      var $button = $(this);
+      var form = $button.closest('form');
+      var action = form.find('input[name="action"]').val();
+      var url = "{% url 'checklist:fiche_detail' fiche.id %}";
+      var section = action.includes('mesure_composants') ? 'mesure-composants' : 'melange-mortier';
+      
+      // Ajouter le token CSRF aux données
+      var csrftoken = $('input[name="csrfmiddlewaretoken"]').val();
+      var formData = form.serialize();
+      
+      // Afficher un indicateur de chargement sur le bouton
+      var originalText = $button.text();
+      $button.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ' + originalText);
+      
+      // Envoyer la requête AJAX
+      $.ajax({
+        type: "POST",
+        url: url,
+        data: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': csrftoken
+        },
+        dataType: 'json',
+        success: function(response) {
+          if (response.success) {
+            // Mettre à jour les boutons en fonction de la réponse
+            updateTimeButtons(section, response);
+            
+            // Mettre à jour le statut
+            updateTimeStatus(section, response);
+          } else {
+            alert("Une erreur s'est produite. Veuillez réessayer.");
+          }
+        },
+        error: function(xhr) {
+          if (xhr.responseJSON && xhr.responseJSON.error) {
+            alert(xhr.responseJSON.error);
+          } else {
+            alert("Une erreur s'est produite. Veuillez réessayer.");
+          }
+        },
+        complete: function() {
+          // Restaurer le bouton
+          $button.prop('disabled', false).text(originalText);
+        }
+      });
+    });
+  }
+  
+  // Fonction pour mettre à jour le statut
+  function updateTimeStatus(section, data) {
+    var statusDiv = $('#' + section + '-time-section .d-flex > div:last-child');
+    var statusHTML = '<strong>Statut:</strong> ' + data.status;
+    
+    if (data.duree) {
+      statusHTML += '<br><strong>Durée:</strong> ' + formatDuration(data.duree);
+    }
+    
+    statusDiv.html(statusHTML);
+  }
+  
+  // Fonction pour formater la durée
+  function formatDuration(durationStr) {
+    if (!durationStr) return '';
+    
+    // Format: "HH:MM:SS.mmmmmm"
+    var parts = durationStr.split(':');
+    var hours = parseInt(parts[0]);
+    var minutes = parseInt(parts[1]);
+    var seconds = parseInt(parts[2]);
+    
+    var result = '';
+    if (hours > 0) {
+      result += hours + ' heure' + (hours > 1 ? 's' : '') + ' ';
+    }
+    if (minutes > 0 || hours > 0) {
+      result += minutes + ' minute' + (minutes > 1 ? 's' : '') + ' ';
+    }
+    if (seconds > 0 || minutes > 0 || hours > 0) {
+      result += seconds + ' seconde' + (seconds > 1 ? 's' : '');
+    }
+    
+    return result.trim();
+  }
+  
+  // Traitement des autres boutons AJAX
+  $('.ajax-submit').not('.time-action-btn').click(function(e) {
+    e.preventDefault();
+    
+    var form = $(this).closest('form');
+    form.submit();
+  });
+  
+  // Traitement des formulaires de validation
+  $('.validation-form').submit(function(e) {
+    e.preventDefault();
+    
+    var form = $(this);
+    var url = "{% url 'checklist:fiche_detail' fiche.id %}";
+    var formData = form.serialize();
+    var submitButton = form.find('button[type="submit"]');
+    var originalText = submitButton.text();
+    
+    // Afficher un indicateur de chargement sur le bouton
+    submitButton.prop('disabled', true).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ' + originalText);
+    
+    // Envoyer la requête AJAX
+    $.ajax({
+      type: "POST",
+      url: url,
+      data: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val()
+      },
+      success: function(response) {
+        if (response.success) {
+          // Recharger la page pour afficher l'étape suivante
+          window.location.reload();
+        } else {
+          // Afficher le message d'erreur
+          showAlert('danger', response.error || "Une erreur s'est produite lors de la validation.");
+          
+          // Restaurer le bouton
+          submitButton.prop('disabled', false).text(originalText);
+        }
+      },
+      error: function(xhr) {
+        if (xhr.responseJSON && xhr.responseJSON.error) {
+          showAlert('danger', xhr.responseJSON.error);
+        } else {
+          showAlert('danger', "Une erreur s'est produite. Veuillez réessayer.");
+        }
+        
+        // Restaurer le bouton
+        submitButton.prop('disabled', false).text(originalText);
+      }
+    });
+  });
+  
+  // Fonction pour afficher une alerte
+  function showAlert(type, message) {
+    var alertDiv = $('<div class="alert alert-' + type + ' alert-dismissible fade show" role="alert">' +
+                    message +
+                    '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>' +
+                    '</div>');
+    
+    // Ajouter l'alerte au début de l'accordéon ouvert
+    var openAccordion = $('.accordion-collapse.show');
+    if (openAccordion.length) {
+      openAccordion.find('.accordion-body').prepend(alertDiv);
+    } else {
+      // Si aucun accordéon n'est ouvert, ajouter l'alerte au début de la page
+      $('.container').prepend(alertDiv);
+    }
+    
+    // Faire défiler jusqu'à l'alerte
+    $('html, body').animate({
+      scrollTop: alertDiv.offset().top - 100
+    }, 200);
+    
+    // Supprimer l'alerte après 5 secondes
+    setTimeout(function() {
+      alertDiv.alert('close');
+    }, 5000);
+  }
+});
+</script>
+{% endblock %}

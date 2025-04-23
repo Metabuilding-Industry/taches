@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Nouvelle fiche{% endblock %}
+{% block content %}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card shadow">
+        <div class="card-body">
+          <h1 class="h4 mb-4">Créer une nouvelle fiche de suivi</h1>
+          <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="atelier" class="form-label">Atelier</label>
+              <select name="atelier" id="atelier" class="form-select" required>
+                <option value="">Sélectionner un atelier</option>
+                {% for atelier in ateliers %}
+                  <option value="{{ atelier.id }}">{{ atelier.nom }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-4">
+              <label for="controleur" class="form-label">Contrôleur</label>
+              <select name="controleur" id="controleur" class="form-select" required>
+                <option value="">Sélectionner un contrôleur</option>
+                {% for controleur in controleurs %}
+                  <option value="{{ controleur.id }}">{{ controleur.get_full_name|default:controleur.username }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <button type="submit" class="btn btn-success w-100">Créer la fiche</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

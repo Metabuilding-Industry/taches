@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Modifier l'atelier{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="card shadow-lg border-0">
+        <div class="card-body p-4">
+          <h1 class="h4 mb-4 text-center text-warning">
+            <i class="bi bi-pencil-square me-2"></i>Modifier l'atelier
+          </h1>
+          {% if messages %}
+            {% for message in messages %}
+              <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+          <form method="post" autocomplete="off">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="id_nom" class="form-label">Nom de l'atelier</label>
+              <input type="text" name="nom" id="id_nom" class="form-control form-control-lg" required autofocus value="{{ atelier.nom }}">
+            </div>
+            <button type="submit" class="btn btn-warning w-100 fw-bold">
+              <i class="bi bi-check-circle me-1"></i>Enregistrer
+            </button>
+          </form>
+          <div class="mt-4 text-center">
+            <a href="{% url 'checklist:atelier_list' %}" class="link-secondary"><i class="bi bi-arrow-left"></i> Retour à la liste</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

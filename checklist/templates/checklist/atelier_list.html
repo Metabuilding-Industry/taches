@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Liste des ateliers{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">Liste des ateliers</h1>
+    <a href="{% url 'checklist:ajouter_atelier' %}" class="btn btn-success">
+      <i class="bi bi-plus-circle me-1"></i> Ajouter un atelier
+    </a>
+  </div>
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+  {% if ateliers %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle rounded-4 overflow-hidden shadow-lg border border-2 border-primary-subtle">
+        <thead class="table-primary text-primary text-center align-middle">
+          <tr style="font-size: 1.1rem;">
+            <th style="width: 80px;">#</th>
+            <th>Nom de l'atelier</th>
+            <th style="width: 160px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for atelier in ateliers %}
+            <tr class="bg-white">
+              <td class="fw-bold text-center text-primary-emphasis" style="font-size: 1.1rem;">{{ atelier.id }}</td>
+              <td class="ps-3">{{ atelier.nom }}</td>
+              <td class="text-center">
+                <a href="{% url 'checklist:modifier_atelier' atelier.id %}" class="btn btn-sm btn-outline-warning me-2" title="Modifier">
+                  <i class="bi bi-pencil-square"></i>
+                </a>
+                <form method="post" action="{% url 'checklist:supprimer_atelier' atelier.id %}" style="display:inline;" onsubmit="return confirm('Supprimer cet atelier ?');">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="alert alert-info">Aucun atelier pour l'instant.</div>
+  {% endif %}
+</div>
+{% endblock %}

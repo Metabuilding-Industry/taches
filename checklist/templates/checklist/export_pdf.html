@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Export PDF - Fiche #{{ fiche.id }}{% endblock %}
+{% block content %}
+<h1 style="font-size:20px;font-weight:bold;margin-bottom:10px;">Fiche de suivi #{{ fiche.id }}</h1>
+<table style="width:100%;margin-bottom:15px;">
+<tr><td><b>Atelier :</b></td><td>{{ fiche.atelier.nom }}</td></tr>
+<tr><td><b>Opérateur :</b></td><td>{{ fiche.operateur.get_full_name }}</td></tr>
+<tr><td><b>Contrôleur :</b></td><td>{{ fiche.controleur.get_full_name }}</td></tr>
+<tr><td><b>Date de création :</b></td><td>{{ fiche.date_creation|date:'d/m/Y H:i' }}</td></tr>
+</table>
+
+<h2 style="font-size:16px;font-weight:bold;margin-top:20px;">Étapes de fabrication</h2>
+<table border="1" cellspacing="0" cellpadding="4" style="width:100%;margin-bottom:15px;font-size:12px;">
+<tr style="background:#eee;"><th>Étape</th><th>Consignes</th><th>Début</th><th>Fin</th><th>Durée</th><th>Validation</th><th>Observations</th></tr>
+{% for t in taches %}
+<tr>
+<td>{{ t.etape.nom }}</td>
+<td>{{ t.etape.consignes|linebreaksbr }}</td>
+<td>{{ t.date_debut|date:'d/m/Y H:i' }}</td>
+<td>{{ t.date_fin|date:'d/m/Y H:i' }}</td>
+<td>{{ t.duree|default:'—' }}</td>
+<td>{{ t.get_validation_display }}</td>
+<td>{{ t.observations }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<h2 style="font-size:16px;font-weight:bold;margin-top:20px;">Incidents rencontrés</h2>
+<table border="1" cellspacing="0" cellpadding="4" style="width:100%;margin-bottom:15px;font-size:12px;">
+<tr style="background:#eee;"><th>Date</th><th>Description</th></tr>
+{% for i in incidents %}
+<tr><td>{{ i.date|date:'d/m/Y H:i' }}</td><td>{{ i.description }}</td></tr>
+{% empty %}
+<tr><td colspan="2">Aucun incident signalé.</td></tr>
+{% endfor %}
+</table>
+
+<h2 style="font-size:16px;font-weight:bold;margin-top:20px;">Retour d'expérience</h2>
+{% if retour_experience %}
+<div style="border:1px solid #ccc;padding:6px;font-size:12px;">{{ retour_experience.commentaire }}</div>
+<div style="font-size:11px;color:#888;">Enregistré le {{ retour_experience.date|date:'d/m/Y H:i' }}</div>
+{% else %}
+<div style="font-size:12px;color:#888;">Aucun retour enregistré.</div>
+{% endif %}
+{% endblock %}

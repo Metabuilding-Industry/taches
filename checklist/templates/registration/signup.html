@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Inscription{% endblock %}
+{% block content %}
+<div class="container py-5" style="min-height: 90vh;">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="text-center mb-4">
+        <img src="https://cdn-icons-png.flaticon.com/512/2919/2919600.png" alt="Checklist Icon" style="width:56px;height:56px;">
+        <div class="display-6 mt-2 mb-0 fw-bold text-primary">MTB Checklist Production</div>
+      </div>
+      <div class="card shadow-lg border-0">
+        <div class="card-body p-4">
+          <h1 class="h4 mb-4 text-center text-secondary">Demande de création de compte</h1>
+          {% if form.errors %}
+            <div class="alert alert-danger">Veuillez corriger les erreurs ci-dessous.</div>
+          {% endif %}
+          <form method="post" autocomplete="off">
+            {% csrf_token %}
+            {% for field in form %}
+              <div class="mb-3">
+                {{ field.label_tag }}
+                {# Ajout manuel de la classe form-control si possible #}
+                {% if field.field.widget.input_type != 'checkbox' and field.field.widget.input_type != 'radio' %}
+                  {{ field }}
+                  <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                      var input = document.getElementById('{{ field.auto_id }}');
+                      if(input) input.classList.add('form-control');
+                    });
+                  </script>
+                {% else %}
+                  {{ field }}
+                {% endif %}
+                {% if field.errors %}
+                  <div class="text-danger small">{{ field.errors|striptags }}</div>
+                {% endif %}
+              </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">Demander un compte</button>
+          </form>
+          <div class="mt-4 text-center">
+            <a href="{% url 'login' %}" class="link-secondary">Déjà un compte ? Se connecter</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
